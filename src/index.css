@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Termo Game Design System - Dark Theme with Game Colors */
+
+@layer base {
+  :root {
+    /* Base theme colors - dark purple-gray like the reference */
+    --background: 260 8% 14%;
+    --foreground: 0 0% 95%;
+
+    --card: 260 8% 18%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 260 8% 18%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 194 100% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 260 8% 25%;
+    --secondary-foreground: 0 0% 85%;
+
+    --muted: 260 8% 22%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 194 100% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 260 8% 25%;
+    --input: 260 8% 25%;
+    --ring: 194 100% 45%;
+
+    /* Game-specific colors */
+    --game-correct: 142 76% 36%;     /* Green for correct letters */
+    --game-present: 45 93% 47%;      /* Yellow for present letters */
+    --game-absent: 0 0% 35%;         /* Gray for absent letters */
+    --game-empty: 260 8% 25%;        /* Empty tile color */
+    --game-tile-border: 260 8% 35%;  /* Tile border */
+    
+    /* Keyboard colors */
+    --key-background: 260 8% 30%;
+    --key-text: 0 0% 85%;
+    --key-border: 260 8% 40%;
+
+    /* Header and navigation */
+    --nav-active: 0 0% 85%;
+    --nav-inactive: 0 0% 55%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+/* Game-specific classes and animations */
+@layer components {
+  .tile {
+    @apply w-12 h-12 md:w-14 md:h-14 border-2 border-game-tile-border rounded-sm flex items-center justify-center text-lg font-bold uppercase transition-all duration-300;
+  }
+  
+  .tile-empty {
+    @apply bg-game-empty text-foreground;
+  }
+  
+  .tile-filled {
+    @apply bg-game-empty text-foreground border-foreground;
+  }
+  
+  .tile-correct {
+    @apply bg-game-correct text-white border-game-correct;
+  }
+  
+  .tile-present {
+    @apply bg-game-present text-white border-game-present;
+  }
+  
+  .tile-absent {
+    @apply bg-game-absent text-white border-game-absent;
+  }
+  
+  .key {
+    @apply bg-key-background text-key-text border border-key-border rounded font-semibold uppercase transition-all duration-200 hover:bg-key-border;
+  }
+  
+  .key-correct {
+    @apply bg-game-correct text-white border-game-correct;
+  }
+  
+  .key-present {
+    @apply bg-game-present text-white border-game-present;
+  }
+  
+  .key-absent {
+    @apply bg-game-absent text-white border-game-absent;
+  }
+  
+  .nav-tab {
+    @apply px-4 py-2 text-nav-inactive transition-colors duration-200 hover:text-nav-active;
+  }
+  
+  .nav-tab-active {
+    @apply text-nav-active;
+  }
+}
+
+@layer utilities {
+  .flip-tile {
+    animation: flip 0.6s ease-in-out;
+  }
+  
+  .shake {
+    animation: shake 0.5s ease-in-out;
+  }
+  
+  .bounce-in {
+    animation: bounceIn 0.3s ease-out;
+  }
+}
+
+@keyframes flip {
+  0% { transform: rotateX(0deg); }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.9); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
