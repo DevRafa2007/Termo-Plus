@@ -21,11 +21,26 @@ const isValidWord = (word: string): boolean => {
 // Carregamento e processamento do léxico
 async function getWords() {
   try {
-    const response = await fetch('/lexico.txt');
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    // Try multiple paths to be robust on different hosts/build setups
+    const candidatePaths = ['/lexico.txt', '/public/lexico.txt', './lexico.txt', '/assets/lexico.txt'];
+    let response: Response | null = null;
+    let lastErr: any = null;
+    for (const p of candidatePaths) {
+      try {
+        response = await fetch(p);
+        if (response.ok) break;
+        lastErr = new Error(`HTTP error! status: ${response.status} for ${p}`);
+        response = null;
+      } catch (err) {
+        lastErr = err;
+        response = null;
+      }
     }
-    
+
+    if (!response) {
+      throw lastErr || new Error('Não foi possível buscar lexicon (paths tried: /lexico.txt, /public/lexico.txt, ./lexico.txt, /assets/lexico.txt)');
+    }
+
     const text = await response.text();
     if (!text.trim()) {
       throw new Error('Arquivo léxico vazio');
@@ -56,9 +71,23 @@ async function getWords() {
 // Carrega também a lista de palavras comuns (preferida para soluções)
 async function loadCommonWords() {
   try {
-    const response = await fetch('/common-words.txt');
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    const candidatePaths = ['/common-words.txt', '/public/common-words.txt', './common-words.txt', '/assets/common-words.txt'];
+    let response: Response | null = null;
+    let lastErr: any = null;
+    for (const p of candidatePaths) {
+      try {
+        response = await fetch(p);
+        if (response.ok) break;
+        lastErr = new Error(`HTTP error! status: ${response.status} for ${p}`);
+        response = null;
+      } catch (err) {
+        lastErr = err;
+        response = null;
+      }
+    }
+
+    if (!response) {
+      throw lastErr || new Error('Não foi possível buscar common-words (paths tried)');
     }
 
     const text = await response.text();
