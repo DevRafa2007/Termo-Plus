@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode, useEffect } from "react";
-import { getRandomWord, fiveLetterWords, isWordLoaded, isValidGuess, getLoadError } from "../utils/wordUtils";
+import { getRandomWord, fiveLetterWords, isWordLoaded, isValidGuess, getLoadError, isCommonWordsLoaded, getCommonWords } from "../utils/wordUtils";
 import { evaluateSolutionGuess } from '../utils/evaluateGuess';
 import { loadStats, saveStats, PersistedStats } from '@/lib/stats';
 import WinModal from '@/components/WinModal';
@@ -58,10 +58,11 @@ const getMaxAttempts = (mode: GameMode): number => {
 
 const getRandomSolutions = (mode: GameMode, previousSolutions: string[] = []): string[] => {
   const getValidWord = (previousWord: string | null): string => {
-    if (!isWordLoaded()) {
+    if (!isWordLoaded() && !isCommonWordsLoaded()) {
       throw new Error('O léxico ainda não foi carregado');
     }
-    
+
+    // getRandomWord already prefers commonWords when available; pass null to use default behavior
     const word = getRandomWord(previousWord);
     if (!word) {
       throw new Error('Não foi possível obter uma palavra válida');
@@ -340,7 +341,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const checkWordsLoaded = () => {
-      if (isWordLoaded() && fiveLetterWords.length > 0) {
+      const hasWords = (isWordLoaded() && fiveLetterWords.length > 0) || (isCommonWordsLoaded() && getCommonWords().length > 0);
+      if (hasWords) {
         setIsReady(true);
         try {
           const solutions = getRandomSolutions("termo");
