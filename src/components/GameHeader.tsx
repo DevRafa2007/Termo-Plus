@@ -1,5 +1,6 @@
 import React from "react";
 import { useGame, GameMode } from "@/contexts/GameContext";
+import { getLoadError, getCommonLoadError } from "@/utils/wordUtils";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, BarChart3, Settings } from "lucide-react";
 import { Eye, EyeOff } from "lucide-react";
@@ -12,6 +13,7 @@ interface GameHeaderProps {
 const GameHeader = ({ onShowStats, onShowInstructions }: GameHeaderProps) => {
   const { state, dispatch } = useGame();
   const [hidden, setHidden] = React.useState(false);
+  const [hideLoadWarning, setHideLoadWarning] = React.useState(false);
 
   const modes: { key: GameMode; label: string }[] = [
     { key: "termo", label: "termo" },
@@ -121,6 +123,21 @@ const GameHeader = ({ onShowStats, onShowInstructions }: GameHeaderProps) => {
           )}
         </div>
       </div>
+
+      {/* Load warning banner: shown when lexicon failed to load but common words available */}
+      { !hideLoadWarning && (getLoadError() || getCommonLoadError()) && (
+        <div className="container mx-auto px-4 mt-2">
+          <div className="bg-yellow-600/10 border border-yellow-500 text-yellow-200 px-3 py-2 rounded-md text-sm flex items-start justify-between">
+            <div>
+              <strong>Aviso:</strong>{' '}
+              {getLoadError() ? 'O léxico completo não foi carregado (404). O jogo usará a lista reduzida de palavras.' : ''}
+            </div>
+            <div>
+              <button onClick={() => setHideLoadWarning(true)} className="text-yellow-300 hover:underline">Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

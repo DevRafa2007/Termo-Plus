@@ -205,7 +205,15 @@ export const getRandomWord = (previousWord: string | null, words?: string[]): st
 // Função para validar tentativas do usuário
 export const isValidGuess = (guess: string): boolean => {
   const normalizedGuess = removeAcentos(guess.toLowerCase());
-  return fiveLetterWords.some(word => removeAcentos(word) === normalizedGuess);
+  // Prefer the full lexicon when available
+  if (fiveLetterWords && fiveLetterWords.length > 0) {
+    return fiveLetterWords.some(word => removeAcentos(word) === normalizedGuess);
+  }
+  // Fallback to commonWords when lexicon not loaded
+  if (commonWords && commonWords.length > 0) {
+    return commonWords.some(word => removeAcentos(word) === normalizedGuess);
+  }
+  return false;
 };
 
 // Exports for common words
