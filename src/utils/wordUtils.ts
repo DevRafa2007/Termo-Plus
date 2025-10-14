@@ -115,9 +115,29 @@ async function loadCommonWords() {
   }
 }
 
-// Inicializa o carregamento das palavras
-getWords();
-loadCommonWords();
+// Inicializa o carregamento das palavras.
+// Strategy: try to load common words first (present in repo). Only if common words
+// are not available, attempt to fetch the larger lexicon. This reduces 404 noise
+// on hosts that don't include the full lexicon in `public/`.
+async function initWordLists() {
+  await loadCommonWords();
+  if (!isCommonLoaded) {
+    // If common words failed, try to load the full lexicon as a fallback
+    await getWords();
+  } else {
+    // common words loaded - optionally still try to load full lexicon in background
+    // but avoid automatic fetch to reduce 404s on hosts that don't provide it.
+    // Consumers can call `forceLoadLexicon()` if they want to attempt it.
+    console.log('Common words available; skipping full lexicon fetch to avoid extra network errors');
+  }
+}
+
+// Exported helper to explicitly attempt loading the full lexicon later
+export const forceLoadLexicon = async () => {
+  await getWords();
+};
+
+initWordLists();
 
 // Funções exportadas
 export const isWordLoaded = () => isWordsLoaded;
@@ -143,14 +163,17 @@ export const getRandomWord = (previousWord: string | null, words?: string[]): st
     return newWord;
   }
 
-  if (!isWordsLoaded || fiveLetterWords.length === 0) {
-    console.error('Léxico não está carregado ou vazio');
+  // If main lexicon isn't available, but common words are, allow fallback to commonWords.
+  const hasMain = isWordsLoaded && fiveLetterWords.length > 0;
+  const hasCommon = isCommonLoaded && commonWords.length > 0;
+  if (!hasMain && !hasCommon) {
+    console.error('Léxico e lista de palavras comuns não estão carregadas');
     return null;
   }
 
   // If common words are loaded, prefer them with high probability (e.g. 85%).
   const rand = Math.random();
-  if (isCommonLoaded && commonWords.length > 0 && rand < 0.85) {
+  if (hasCommon && rand < 0.85) {
     // choose from commonWords
     let attempts = 0;
     let newWord: string | null = null;
@@ -158,6 +181,19 @@ export const getRandomWord = (previousWord: string | null, words?: string[]): st
       newWord = commonWords[Math.floor(Math.random() * commonWords.length)];
       attempts++;
       if (attempts > 100) return null;
+    } while (newWord === previousWord);
+    return newWord;
+  }
+
+  // If we don't have the main lexicon but have common words, fall back to them.
+  if (!hasMain && hasCommon) {
+    // Pick from commonWords (different from previousWord)
+    let attempts = 0;
+    let newWord: string | null = null;
+    do {
+      newWord = commonWords[Math.floor(Math.random() * commonWords.length)];
+      attempts++;
+      if (attempts > 200) return null;
     } while (newWord === previousWord);
     return newWord;
   }
