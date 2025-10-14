@@ -5,36 +5,40 @@ interface GameTileProps {
   tile: GameTileType;
   isActive?: boolean;
   animationDelay?: number;
+  onClick?: () => void;
+  row?: number;
+  col?: number;
 }
 
-const GameTile = ({ tile, isActive = false, animationDelay = 0 }: GameTileProps) => {
-  const getTileClass = () => {
-    const baseClass = "tile";
-    
-    switch (tile.status) {
-      case "correct":
-        return cn(baseClass, "tile-correct");
-      case "present":
-        return cn(baseClass, "tile-present");
-      case "absent":
-        return cn(baseClass, "tile-absent");
-      case "filled":
-        return cn(baseClass, "tile-filled", isActive && "border-primary");
-      default:
-        return cn(baseClass, "tile-empty");
-    }
-  };
+const GameTile = ({ tile, isActive = false, animationDelay = 0, onClick, row, col }: GameTileProps) => {
+  const baseClass = "tile";
+
+  // front is neutral; back gets colored classes depending on status
+  const backStatusClass = tile.status === "correct" ? "tile-correct" :
+                          tile.status === "present" ? "tile-present" :
+                          tile.status === "absent" ? "tile-absent" : "";
+
+  const isReveal = tile.status === "correct" || tile.status === "present" || tile.status === "absent";
 
   return (
     <div
-      className={getTileClass()}
-      style={{
-        animationDelay: tile.status !== "empty" && tile.status !== "filled" 
-          ? `${animationDelay}ms` 
-          : undefined
-      }}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      data-row={typeof row === 'number' ? row : undefined}
+      data-col={typeof col === 'number' ? col : undefined}
+      className={cn(baseClass, isReveal && "reveal", onClick && 'cursor-pointer', isActive && 'cursor-active')}
+      // keep perspective on container; animationDelay applied to inner rotation via style
     >
-      {tile.letter}
+      <div
+        className="tile-inner"
+        style={{
+          transitionDelay: isReveal ? `${animationDelay}ms` : undefined,
+        }}
+      >
+  <div className={cn("tile-front", isActive && "border-primary")}>{tile.letter}</div>
+        <div className={cn("tile-back", backStatusClass)}>{tile.letter}</div>
+      </div>
     </div>
   );
 };

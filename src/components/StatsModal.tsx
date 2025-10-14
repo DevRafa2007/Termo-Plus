@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
 import { useGame } from "@/contexts/GameContext";
 import { useEffect, useState } from "react";
+import { loadStats, resetStats, PersistedStats } from "@/lib/stats";
 
 interface StatsModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ interface StatsModalProps {
 const StatsModal = ({ isOpen, onClose }: StatsModalProps) => {
   const { state, dispatch } = useGame();
   const [timeUntilNext, setTimeUntilNext] = useState("");
+  const [persistedStats, setPersistedStats] = useState<PersistedStats | null>(null);
 
   useEffect(() => {
     const updateTimer = () => {
@@ -37,6 +39,11 @@ const StatsModal = ({ isOpen, onClose }: StatsModalProps) => {
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const s = loadStats(state.maxAttempts);
+    setPersistedStats(s);
+  }, [state.maxAttempts, state.gameStatus]);
 
   const handleShare = () => {
     const gameResult = state.gameStatus === "won" ? "✅" : "❌";
@@ -75,27 +82,19 @@ const StatsModal = ({ isOpen, onClose }: StatsModalProps) => {
     onClose();
   };
 
-  const calculateStats = () => {
-    // Mock stats - in a real app, these would come from localStorage or backend
-    return {
-      gamesPlayed: 1,
-      winRate: state.gameStatus === "won" ? 100 : 0,
-      currentStreak: state.gameStatus === "won" ? 1 : 0,
-      maxStreak: 1,
-      distribution: {
-        1: 0,
-        2: 0,
-        3: 0,
-        4: 0,
-        5: 0,
-        6: state.gameStatus === "won" ? 1 : 0,
-        7: 0,
-        8: 0,
-      }
-    };
+  const handleResetStats = () => {
+    resetStats(state.maxAttempts);
+    setPersistedStats(loadStats(state.maxAttempts));
   };
 
-  const stats = calculateStats();
+  const stats = persistedStats || {
+    gamesPlayed: 0,
+    wins: 0,
+    currentStreak: 0,
+    maxStreak: 0,
+    distribution: {}
+  };
+  const winRate = stats.gamesPlayed > 0 ? Math.round((stats.wins / stats.gamesPlayed) * 100) : 0;
   const attempts = state.maxAttempts - state.attemptsLeft;
 
   return (
@@ -129,7 +128,7 @@ const StatsModal = ({ isOpen, onClose }: StatsModalProps) => {
               <div className="text-xs text-muted-foreground">jogos</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-foreground">{stats.winRate}%</div>
+              <div className="text-3xl font-bold text-foreground">{winRate}%</div>
               <div className="text-xs text-muted-foreground">de vitórias</div>
             </div>
             <div>
@@ -157,13 +156,11 @@ const StatsModal = ({ isOpen, onClose }: StatsModalProps) => {
                           : "bg-muted-foreground/40"
                       }`}
                       style={{
-                        width: stats.distribution[num as keyof typeof stats.distribution] > 0 
-                          ? "100%" 
-                          : "4px"
+                        width: (stats.distribution && stats.distribution[num]) > 0 ? "100%" : "4px"
                       }}
                     />
                     <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm font-bold text-foreground">
-                      {stats.distribution[num as keyof typeof stats.distribution] || 0}
+                      {(stats.distribution && stats.distribution[num]) || 0}
                     </div>
                   </div>
                 </div>
@@ -206,6 +203,9 @@ const StatsModal = ({ isOpen, onClose }: StatsModalProps) => {
             >
               Jogar Novamente
             </Button>
+          </div>
+          <div className="mt-2 flex justify-center">
+            <Button variant="ghost" onClick={handleResetStats} className="text-xs text-muted-foreground">Redefinir estatísticas</Button>
           </div>
         </div>
       </DialogContent>

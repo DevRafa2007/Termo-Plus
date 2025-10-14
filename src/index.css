@@ -10,6 +10,9 @@
     --background: 260 8% 14%;
     --foreground: 0 0% 95%;
 
+    /* Animation durations */
+    --transition-normal: 300ms;
+
     --card: 260 8% 18%;
     --card-foreground: 0 0% 95%;
 
@@ -33,7 +36,7 @@
 
     --border: 260 8% 25%;
     --input: 260 8% 25%;
-    --ring: 194 100% 45%;
+  --ring: 170 65% 45%;
 
     /* Game-specific colors */
     --game-correct: 142 76% 36%;     /* Green for correct letters */
@@ -97,7 +100,7 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+  --ring: 170 55% 50%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -111,54 +114,222 @@
 
 /* Game-specific classes and animations */
 @layer components {
+  /* Header animations */
+  .header-content {
+    transform-origin: top;
+    transition: transform var(--transition-normal),
+                opacity var(--transition-normal),
+                max-height var(--transition-normal);
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 200px;
+  }
+
+  .header-content.header-hidden {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+    overflow: hidden;
+  }
+
+  .header-actions {
+    transition: opacity var(--transition-normal);
+    opacity: 1;
+  }
+
+  .header-actions.header-hidden {
+    opacity: 0;
+  }
   .tile {
-    @apply w-12 h-12 md:w-14 md:h-14 border-2 border-game-tile-border rounded-sm flex items-center justify-center text-lg font-bold uppercase transition-all duration-300;
+    /* Pixel-perfect sizes: mobile 48px, sm 56px, md 64px */
+    width: 48px;
+    height: 48px;
+    border-width: 2px;
+    border-style: solid;
+    border-color: hsl(var(--game-tile-border));
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: all 0.2s ease-in-out;
+    perspective: 1000px;
   }
-  
+
+  /* visual for active cursor tile */
+  .tile.cursor-active {
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.16), 0 1px 2px rgba(0,0,0,0.15);
+    border-color: hsl(var(--ring));
+  }
+
+  .tile:focus,
+  .tile:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.22);
+    border-color: hsl(var(--ring));
+  }
+
+  @media (min-width: 640px) {
+    .tile { width: 56px; height: 56px; }
+  }
+
+  @media (min-width: 768px) {
+    .tile { width: 64px; height: 64px; }
+  }
+
   .tile-empty {
-    @apply bg-game-empty text-foreground;
+    background-color: hsl(var(--game-empty));
+    color: hsl(var(--foreground));
   }
-  
+
   .tile-filled {
-    @apply bg-game-empty text-foreground border-foreground;
+    background-color: hsl(var(--game-empty));
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--foreground));
   }
-  
+
   .tile-correct {
-    @apply bg-game-correct text-white border-game-correct;
+    background-color: hsl(var(--game-correct));
+    color: #fff;
+    border-color: hsl(var(--game-correct));
   }
-  
+
   .tile-present {
-    @apply bg-game-present text-white border-game-present;
+    background-color: hsl(var(--game-present));
+    color: #fff;
+    border-color: hsl(var(--game-present));
   }
-  
+
   .tile-absent {
-    @apply bg-game-absent text-white border-game-absent;
+    background-color: hsl(var(--game-absent));
+    color: #fff;
+    border-color: hsl(var(--game-absent));
+  }
+
+  /* flip inner container */
+  .tile-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(.2,.9,.3,1), box-shadow 0.25s ease;
+    transform-origin: center center;
+  }
+
+  .tile-front, .tile-back {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .tile-front {
+    background-color: hsl(var(--game-empty));
+    color: hsl(var(--foreground));
+    transform: rotateY(0deg) translateZ(1px);
+  }
+
+  .tile-back {
+    transform: rotateY(180deg) translateZ(1px);
+    /* make back face appear above with slight shadow */
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  }
+
+  /* when reveal, rotate the inner to show back face (horizontal flip)
+     we also slightly scale to give a more physical feel */
+  .reveal .tile-inner {
+    transform: rotateY(180deg) scale(1.02);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
   }
   
   .key {
-    @apply bg-key-background text-key-text border border-key-border rounded font-semibold uppercase transition-all duration-200 hover:bg-key-border;
+    /* base key: 40px height x 40px min-width on mobile; slightly larger on sm */
+    background-color: hsl(var(--key-background));
+    color: hsl(var(--key-text));
+    border: 1px solid hsl(var(--key-border));
+    border-radius: 6px;
+    font-weight:600; text-transform:uppercase; transition: all .15s ease;
+    height: 40px; min-width: 40px; padding: 0 8px; font-size: 14px; display:flex; align-items:center; justify-content:center;
+  }
+
+  /* allow safe bottom spacing on mobile (to avoid overlap with OS gestures) */
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 8px); }
+
+  /* Very small phones adjustments */
+  @media (max-width: 360px) {
+    .key { font-size: 13px; height:36px; min-width:34px; padding: 0 6px; }
+    /* fallback tiny tile size (only for extremely narrow devices) */
+    .tile { width:40px; height:40px; }
+  }
+
+  /* When there are multiple boards side-by-side, reduce tile sizes on small screens
+     so two boards can fit without overlapping. This class is added on the grid container. */
+  @media (max-width: 640px) {
+    .multi-boards .tile { width: 34px; height: 34px; }
+  }
+
+  @media (min-width: 640px) and (max-width: 767px) {
+    .multi-boards .tile { width: 44px; height: 44px; }
   }
   
   .key-correct {
-    @apply bg-game-correct text-white border-game-correct;
+    background-color: hsl(var(--game-correct));
+    color: #fff;
+    border-color: hsl(var(--game-correct));
   }
-  
+
   .key-present {
-    @apply bg-game-present text-white border-game-present;
+    background-color: hsl(var(--game-present));
+    color: #fff;
+    border-color: hsl(var(--game-present));
   }
-  
+
   .key-absent {
-    @apply bg-game-absent text-white border-game-absent;
+    background-color: hsl(var(--game-absent));
+    color: #fff;
+    border-color: hsl(var(--game-absent));
   }
-  
+
   .nav-tab {
-    @apply px-4 py-2 text-nav-inactive transition-colors duration-200 hover:text-nav-active;
+    padding: 8px 16px;
+    color: hsl(var(--nav-inactive));
+    transition: color .2s;
   }
-  
-  .nav-tab-active {
-    @apply text-nav-active;
-  }
+
+  .nav-tab-active { color: hsl(var(--nav-active)); }
 }
+
+/* Header collapse animation */
+.header-wrapper {
+  transition: height 360ms cubic-bezier(.2,.9,.3,1), opacity 240ms ease, transform 360ms cubic-bezier(.2,.9,.3,1);
+}
+
+.header-wrapper .header-content {
+  transition: opacity 240ms ease, transform 320ms cubic-bezier(.2,.9,.3,1);
+}
+
+.header-collapsed {
+  height: 44px; /* keep a small area for title */
+  overflow: visible;
+}
+
+.header-collapsed .nav,
+.header-collapsed .header-left,
+.header-collapsed .header-right,
+.header-collapsed .game-info {
+  opacity: 0;
+  transform: translateY(-6px) scaleY(0.98);
+  pointer-events: none;
+}
+
+.header-collapsed h1 {
+  transform: translateY(-2px);
+}
+
 
 @layer utilities {
   .flip-tile {
@@ -194,10 +365,11 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }

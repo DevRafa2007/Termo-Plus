@@ -10,7 +10,7 @@ const GameKeyboard = () => {
   const keyboardRows = [
     ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
     ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
-    ["ENTER", "Z", "X", "C", "V", "B", "N", "M", "⌫"],
+    ["Z", "X", "C", "V", "B", "N", "M"],
   ];
 
   const handleKeyPress = useCallback((key: string) => {
@@ -27,24 +27,21 @@ const GameKeyboard = () => {
 
   const handleLetterClick = useCallback((letter: string) => {
     if (state.gameStatus !== "playing") return;
-    
-    // If the letter is already in the current guess, remove the last occurrence
-    if (state.currentGuess.includes(letter)) {
-      const lastIndex = state.currentGuess.lastIndexOf(letter);
-      const newGuess = state.currentGuess.slice(0, lastIndex) + state.currentGuess.slice(lastIndex + 1);
-      // We need to update the context to support this
-      dispatch({ type: "SET_CURRENT_GUESS", payload: newGuess });
-    } else if (state.currentGuess.length < 5) {
-      // Add the letter if there's space
-      dispatch({ type: "ADD_LETTER", payload: letter });
-    }
-  }, [state.gameStatus, state.currentGuess, dispatch]);
+    dispatch({ type: "ADD_LETTER", payload: letter });
+  }, [state.gameStatus, state.currentGuess.length, dispatch]);
 
   const getKeyClass = (key: string) => {
-    const baseClass = "key h-12 flex items-center justify-center min-w-[2.5rem] px-2";
+    // responsive min-width: slightly smaller on very small screens to avoid overflow,
+    // but still touch-friendly on most devices
+    const baseClass = "key h-11 sm:h-12 flex items-center justify-center min-w-[1.6rem] sm:min-w-[2.4rem] px-2";
     
-    if (key === "ENTER" || key === "⌫") {
-      return cn(baseClass, "min-w-[4rem] text-xs");
+    if (key === "ENTER") {
+      // ENTER exact width: 72px on mobile (4.5rem)
+      return cn(baseClass, "min-w-[4.5rem] sm:min-w-[5.5rem] px-3 font-medium");
+    }
+
+    if (key === "⌫") {
+      return cn(baseClass, "min-w-[2.4rem]");
     }
 
     const status = state.keyboardStatus[key];
@@ -79,24 +76,32 @@ const GameKeyboard = () => {
   }, [state.gameStatus, handleKeyPress]);
 
   return (
-    <div className="w-full max-w-lg mx-auto px-4 pb-4">
-      <div className="flex flex-col gap-2">
+    <div className="w-full max-w-lg mx-auto px-2 pb-4 safe-bottom">
+      <div className="flex flex-col gap-2 w-full">
         {keyboardRows.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex justify-center gap-1">
-            {row.map((key) => {
-              const isLetter = /^[A-Z]$/.test(key);
-              return (
-                <Button
-                  key={key}
-                  onClick={() => isLetter ? handleLetterClick(key) : handleKeyPress(key)}
-                  className={getKeyClass(key)}
-                  disabled={state.gameStatus !== "playing"}
-                  variant="ghost"
-                >
-                  {key === "⌫" ? <Delete className="h-4 w-4" /> : key}
+          <div key={rowIndex} className="flex justify-center gap-1 w-full flex-wrap">
+            {row.map((key) => (
+              <Button
+                key={key}
+                onClick={() => handleLetterClick(key)}
+                className={getKeyClass(key)}
+                disabled={state.gameStatus !== "playing"}
+                variant="ghost"
+              >
+                {key}
+              </Button>
+            ))}
+            {rowIndex === 2 && (
+              // append ENTER and BACKSPACE at the end of the last row
+              <>
+                <Button onClick={() => handleKeyPress('⌫')} className={getKeyClass('⌫')} variant="ghost">
+                  <Delete className="h-5 w-5" />
                 </Button>
-              );
-            })}
+                <Button onClick={() => handleKeyPress('ENTER')} className={cn(getKeyClass('ENTER'), 'md:flex-none')} variant="ghost">
+                  ENTER
+                </Button>
+              </>
+            )}
           </div>
         ))}
       </div>
