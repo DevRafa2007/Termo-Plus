@@ -130,19 +130,30 @@ const initialState: GameState = {
 const gameReducer = (state: GameState, action: GameAction): GameState => {
     switch (action.type) {
       case "SET_MODE": {
-        const maxAttempts = getMaxAttempts(action.payload);
-        const solutions = getRandomSolutions(action.payload);
-        return {
-          ...initialState,
-          mode: action.payload,
-          maxAttempts,
-          attemptsLeft: maxAttempts,
-          solutions,
-          boards: createInitialBoards(action.payload, maxAttempts),
-          error: undefined,
-          currentGuess: Array(5).fill(""),
-          cursor: 0,
-        };
+          try {
+            const maxAttempts = getMaxAttempts(action.payload);
+            const solutions = getRandomSolutions(action.payload);
+            return {
+              ...initialState,
+              mode: action.payload,
+              maxAttempts,
+              attemptsLeft: maxAttempts,
+              solutions,
+              boards: createInitialBoards(action.payload, maxAttempts),
+              error: undefined,
+              currentGuess: Array(5).fill(""),
+              cursor: 0,
+            };
+          } catch (err) {
+            // Avoid throwing inside reducer. Store error message in state and keep previous mode applied minimally.
+            const msg = err instanceof Error ? err.message : 'Erro ao gerar soluções';
+            console.error('SET_MODE failed to generate solutions:', err);
+            return {
+              ...state,
+              mode: action.payload,
+              error: msg,
+            };
+          }
       }
     
     case "ADD_LETTER": {
@@ -283,16 +294,25 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       };
     
     case "RESET_GAME": {
-      const newMaxAttempts = getMaxAttempts(state.mode);
-      const newSolutions = getRandomSolutions(state.mode, state.solutions);
-      return {
-        ...initialState,
-        mode: state.mode,
-        maxAttempts: newMaxAttempts,
-        attemptsLeft: newMaxAttempts,
-        solutions: newSolutions,
-        boards: createInitialBoards(state.mode, newMaxAttempts),
-      };
+      try {
+        const newMaxAttempts = getMaxAttempts(state.mode);
+        const newSolutions = getRandomSolutions(state.mode, state.solutions);
+        return {
+          ...initialState,
+          mode: state.mode,
+          maxAttempts: newMaxAttempts,
+          attemptsLeft: newMaxAttempts,
+          solutions: newSolutions,
+          boards: createInitialBoards(state.mode, newMaxAttempts),
+        };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Erro ao reiniciar jogo';
+        console.error('RESET_GAME failed to generate solutions:', err);
+        return {
+          ...state,
+          error: msg,
+        };
+      }
     }
     
     case "SET_SOLUTIONS":
@@ -320,6 +340,12 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
         cursor: firstEmpty === -1 ? 4 : firstEmpty,
       };
     }
+
+    case "SET_ERROR":
+      return {
+        ...state,
+        error: action.payload,
+      };
     
     default:
       return state;
@@ -412,7 +438,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   return (
     <GameContext.Provider value={{ state, dispatch }}>
       {children}
-      <WinModal isOpen={showWin} onClose={() => setShowWin(false)} />
+      <WinModal isOpen={state.gameStatus === 'won' || showWin} onClose={() => setShowWin(false)} />
     </GameContext.Provider>
   );
 };
