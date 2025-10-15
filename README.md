@@ -1,4 +1,4 @@
-# TERMO - Jogo de Palavras em Português
+# TERMO PLUS
 
 Um jogo de adivinhar palavras inspirado no Wordle, desenvolvido especificamente para o português brasileiro com múltiplos modos de jogo.
 
